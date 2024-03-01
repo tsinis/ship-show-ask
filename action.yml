@@ -1,7 +1,7 @@
-name: 'Auto Approve'
-description: 'Automatically approve pull requests'
+name: 'Ship/Show/Ask'
+description: 'GitHub Action for a Ship, Show, Ask branching strategy'
 branding:
-  icon: 'check-circle'
+  icon: 'anchor'
   color: 'green'
 inputs:
   github-token:
