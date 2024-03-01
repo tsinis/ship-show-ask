@@ -1,19 +1,17 @@
 # Auto Approve GitHub Action
 
-[![CI](https://github.com/hmarr/auto-approve-action/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/hmarr/auto-approve-action/actions/workflows/ci.yml)
+[![CI](https://github.com/tsinis/ship-show-ask/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/tsinis/ship-show-ask/actions/workflows/ci.yml)
 
-**Name:** `hmarr/auto-approve-action`
+**Name:** `tsinis/ship-show-ask`
 
-Automatically approve GitHub pull requests.
-
-**Important:** use v4 or later, as earlier versions use deprecated versions of node. If you're on an old version of GHES (with an old version of the node interpreter) you may need to use an easier version until you can upgrade.
+This is a fork of the [Auto Approve](https://github.com/marketplace/actions/auto-approve) GitHub Action adjusted for a Ship, Show, Ask branching strategy.
 
 ## Usage instructions
 
-Create a workflow file (e.g. `.github/workflows/auto-approve.yml`) that contains a step that `uses: hmarr/auto-approve-action@v4`. Here's an example workflow file:
+Create a workflow file (e.g. `.github/workflows/auto-approve.yml`) that contains a step that `uses: tsinis/ship-show-ask@v0.1`. Here's an example workflow file:
 
 ```yaml
-name: Auto approve
+name: Auto approve Ship/Show PRs
 on: pull_request_target
 
 jobs:
@@ -22,14 +20,13 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: hmarr/auto-approve-action@v4
+      - uses: tsinis/ship-show-ask@v0.1
 ```
 
 Combine with an `if` clause to only auto-approve certain users. For example, to auto-approve [Dependabot][dependabot] pull requests, use:
 
 ```yaml
-name: Auto approve
-
+name: Ship/Show Dependabot PRs
 on: pull_request_target
 
 jobs:
@@ -39,17 +36,17 @@ jobs:
       pull-requests: write
     if: github.actor == 'dependabot[bot]'
     steps:
-      - uses: hmarr/auto-approve-action@v4
+      - uses: tsinis/ship-show-ask@v0.1
 ```
 
 If you want to use this action from a workflow file that doesn't run on the `pull_request` or `pull_request_target` events, use the `pull-request-number` input:
 
 ```yaml
-name: Auto approve
+name: Auto approve Ship/Show PRs
 
 on:
   workflow_dispatch:
-    inputs: 
+    inputs:
       pullRequestNumber:
         description: Pull request number to auto-approve
         required: false
@@ -60,7 +57,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-    - uses: hmarr/auto-approve-action@v4
+    - uses: tsinis/ship-show-ask@v0.1
       with:
         pull-request-number: ${{ github.event.inputs.pullRequestNumber }}
 ```
@@ -68,8 +65,7 @@ jobs:
 Optionally, you can provide a message for the review:
 
 ```yaml
-name: Auto approve
-
+name: Ship/Show Dependabot PRs with a message
 on: pull_request_target
 
 jobs:
@@ -79,9 +75,9 @@ jobs:
       pull-requests: write
     if: github.actor == 'dependabot[bot]'
     steps:
-      - uses: hmarr/auto-approve-action@v4
+      - uses: tsinis/ship-show-ask@v0.1
         with:
-          review-message: "Auto approved automated PR"
+          review-message: "Auto approved automated PR (from Dependabot)"
 ```
 
 ### Approving on behalf of a different user
@@ -91,15 +87,14 @@ By default, this will use the [automatic GitHub token](https://docs.github.com/e
 To approve the pull request as a different user, pass a GitHub Personal Access Token into the `github-token` input. In order to approve the pull request, the token needs the `repo` scope enabled.
 
 ```yaml
-name: Auto approve
-
+name: Auto approve Ship/Show PRs
 on: pull_request_target
 
 jobs:
   auto-approve:
     runs-on: ubuntu-latest
     steps:
-      - uses: hmarr/auto-approve-action@v4
+      - uses: tsinis/ship-show-ask@v0.1
         with:
           github-token: ${{ secrets.SOME_USERS_PAT }}
 ```
@@ -122,4 +117,4 @@ If you're using a [CODEOWNERS file](https://docs.github.com/en/github/creating-c
 
 ## Development and release process
 
-Each major version corresponds to a branch (e.g. `v3`, `v4`). The latest major version (`v4` at the time of writing) is the repository's default branch. Releases are tagged with semver-style version numbers (e.g. `v1.2.3`).
+Each major version corresponds to a branch (e.g. `v0.1`, `v1.0`). Releases are tagged with semver-style version numbers (e.g. `v1.2.3`).
