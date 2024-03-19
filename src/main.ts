@@ -1,15 +1,27 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { approve } from "./approve";
+import { validate } from "./validate";
 
 export async function run() {
   try {
     const token = core.getInput("github-token");
     const reviewMessage = core.getInput("review-message");
+    const pullRequestNumber = prNumber();
+
+    // Check the PR title
+    const titleIsValid = await validate({
+      token,
+      context: github.context,
+      prNumber: pullRequestNumber,
+    });
+
+    if (!titleIsValid) return core.setFailed("Invalid PR title");
+
     await approve({
       token,
       context: github.context,
-      prNumber: prNumber(),
+      prNumber: pullRequestNumber,
       reviewMessage: reviewMessage || undefined,
     });
   } catch (error) {
