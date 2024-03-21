@@ -7,12 +7,17 @@ interface ValidateTitleOptions {
   token: string;
   context: Context;
   prNumber?: number;
+
+  // This lets us use the native fetch function in tests. @actions/github swaps out
+  // the default fetch implementation with its own, which doesn't work with msw.
+  octokitOpts?: Parameters<typeof github.getOctokit>[1];
 }
 
 export async function validate({
   token,
   context,
   prNumber,
+  octokitOpts,
 }: ValidateTitleOptions): Promise<boolean> {
   if (!prNumber) {
     prNumber = context.payload.pull_request?.number;
@@ -26,7 +31,7 @@ export async function validate({
     return false;
   }
 
-  const client = github.getOctokit(token);
+  const client = github.getOctokit(token, octokitOpts);
 
   try {
     const { owner, repo } = context.repo;
@@ -37,6 +42,15 @@ export async function validate({
       repo,
       pull_number: prNumber,
     });
+
+    core.info(`Adding label to pull request`);
+    await client.rest.issues.addLabels({
+      owner,
+      repo,
+      issue_number: prNumber,
+      labels: ["validated"],
+    });
+    core.info(`Adding label to pull request`);
 
     // TODO!: Implement title checking logic here.
     return pr.title.trim() !== "";
