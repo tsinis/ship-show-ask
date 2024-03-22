@@ -9,11 +9,23 @@ export async function run() {
     const reviewMessage = core.getInput("review-message");
     const pullRequestNumber = prNumber();
 
+    const shipKeyword = core.getInput("ship-keyword");
+    const showKeyword = core.getInput("show-keyword");
+    const askKeyword = core.getInput("ask-keyword");
+    const caseSensitive = Boolean(core.getInput("case-sensitive"));
+    const addLabel = Boolean(core.getInput("add-label"));
+    const requireBrackets = Boolean(core.getInput("require-brackets"));
     // Check the PR title
     const titleIsValid = await validate({
       token,
       context: github.context,
       prNumber: pullRequestNumber,
+      shipKeyword: shipKeyword || undefined,
+      showKeyword: showKeyword || undefined,
+      askKeyword: askKeyword || undefined,
+      caseSensitive: caseSensitive || undefined,
+      addLabel: addLabel || undefined,
+      requireBrackets: requireBrackets || undefined,
     });
 
     if (!titleIsValid) return core.setFailed("Invalid PR title");

@@ -7,6 +7,12 @@ interface ValidateTitleOptions {
   token: string;
   context: Context;
   prNumber?: number;
+  shipKeyword?: string;
+  showKeyword?: string;
+  askKeyword?: string;
+  caseSensitive?: boolean;
+  addLabel?: boolean;
+  requireBrackets?: boolean;
 
   // This lets us use the native fetch function in tests. @actions/github swaps out
   // the default fetch implementation with its own, which doesn't work with msw.
@@ -17,7 +23,14 @@ export async function validate({
   token,
   context,
   prNumber,
-  octokitOpts,
+  shipKeyword = "ship",
+  showKeyword = "show",
+  askKeyword = "ask",
+  caseSensitive = false,
+  addLabel = true,
+  requireBrackets = true,
+
+  octokitOpts, // For testing.
 }: ValidateTitleOptions): Promise<boolean> {
   if (!prNumber) {
     prNumber = context.payload.pull_request?.number;
