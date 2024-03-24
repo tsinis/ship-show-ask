@@ -1,7 +1,8 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
-import { RequestError } from "@octokit/request-error";
+import { Strategy } from "./types/strategy";
 import { Context } from "@actions/github/lib/context";
+import { RequestError } from "@octokit/request-error";
 
 interface ValidateTitleOptions {
   token: string;
@@ -23,28 +24,27 @@ export async function validate({
   token,
   context,
   prNumber,
-  shipKeyword = "ship",
-  showKeyword = "show",
-  askKeyword = "ask",
+  shipKeyword = Strategy.Ship,
+  showKeyword = Strategy.Show,
+  askKeyword = Strategy.Ask,
   caseSensitive = false,
   addLabel = true,
   requireBrackets = true,
 
   octokitOpts, // For testing.
-}: ValidateTitleOptions): Promise<boolean> {
-  if (!prNumber) {
-    prNumber = context.payload.pull_request?.number;
-  }
+}: ValidateTitleOptions): Promise<Strategy | undefined> {
+  if (!prNumber) prNumber = context.payload.pull_request?.number;
 
   if (!prNumber) {
     core.setFailed(
       "Event payload missing `pull_request` key, and no `pull-request-number` provided as input." +
         "Make sure you're triggering this action on the `pull_request` or `pull_request_target` events.",
     );
-    return false;
+    return undefined;
   }
 
   const client = github.getOctokit(token, octokitOpts);
+  let title: string | null = null;
 
   try {
     const { owner, repo } = context.repo;
@@ -64,9 +64,7 @@ export async function validate({
       labels: ["validated"],
     });
     core.info(`Adding label to pull request`);
-
-    // TODO!: Implement title checking logic here.
-    return pr.title.trim() !== "";
+    title = pr.title.trim();
   } catch (error) {
     if (error instanceof RequestError) {
       switch (error.status) {
@@ -101,7 +99,7 @@ export async function validate({
         default:
           core.setFailed(`Error (code ${error.status}): ${error.message}`);
       }
-      return false;
+      return undefined;
     }
 
     if (error instanceof Error) {
@@ -109,6 +107,53 @@ export async function validate({
     } else {
       core.setFailed("Unknown error");
     }
-    return false;
+    return undefined;
+  }
+  addLabel = addLabel !== undefined ? addLabel : true;
+
+  /// TODO!: Title parsing part.
+  askKeyword = askKeyword || Strategy.Ask;
+  shipKeyword = shipKeyword || Strategy.Ship;
+  showKeyword = showKeyword || Strategy.Show;
+  caseSensitive = caseSensitive !== undefined ? caseSensitive : false;
+  requireBrackets = requireBrackets !== undefined ? requireBrackets : true;
+  // Prepare the keywords for the regular expression
+  const keywords = [shipKeyword, showKeyword, askKeyword];
+  const keywordPattern = keywords.join("|");
+
+  const regexPattern = requireBrackets
+    ? `\\[((${keywordPattern}))\\]|\\(((${keywordPattern}))\\)|\\{((${keywordPattern}))\\}` // Matches (keyword), [keyword], {keyword}
+    : `${keywordPattern}`; // Matches keyword without brackets
+
+  const flags = caseSensitive ? "" : "i";
+  const regex = new RegExp(regexPattern, flags);
+  const match = title.match(regex);
+
+  if (match) {
+    // Extract the keyword from the match
+    // If using the above regex, the keyword will be in one of these groups
+    const keywordWithoutBrackets = requireBrackets
+      ? match[2] || match[4] || match[6]
+      : match[0];
+    if (!keywordWithoutBrackets) return undefined;
+
+    switch (keywordWithoutBrackets.toLowerCase()) {
+      case shipKeyword.toLowerCase():
+        console.log("Returning Strategy.Ship");
+        return Strategy.Ship;
+      case showKeyword.toLowerCase():
+        console.log("Returning Strategy.Show");
+        return Strategy.Show;
+      case askKeyword.toLowerCase():
+        console.log("Returning Strategy.Ask");
+        return Strategy.Ask;
+      default:
+        console.log("No matching keyword found");
+        return undefined;
+    }
+  } else {
+    // If there's no match, return undefined
+    console.log("No match found");
+    return undefined;
   }
 }

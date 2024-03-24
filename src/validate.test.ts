@@ -3,6 +3,7 @@ import { Context } from "@actions/github/lib/context";
 import { validate } from "./validate";
 import { HttpResponse, http } from "msw";
 import { setupServer } from "msw/node";
+import { Strategy } from "./types/strategy";
 
 const originalEnv = process.env;
 
@@ -48,7 +49,7 @@ const apiMocks = {
       "/repos/tsinis/test/pulls/101",
       status ?? 200,
       body ?? {
-        title: "Valid Title",
+        title: "[ship] it!",
         head: { sha: "24c5451bbf1fb09caa3ac8024df4788aff4d4974" },
       },
     ),
@@ -67,31 +68,6 @@ const apiMocks = {
       {},
     ),
 };
-
-test("title is valid", async () => {
-  apiMocks.getPull();
-  apiMocks.addLabels();
-
-  expect(
-    await validate({
-      token: "gh-tok",
-      context: ghContext(),
-      octokitOpts: { request: fetch },
-    }),
-  ).toBeTruthy();
-});
-
-test("title is empty", async () => {
-  apiMocks.getPull(200, { title: "" });
-
-  expect(
-    await validate({
-      token: "gh-tok",
-      context: ghContext(),
-      octokitOpts: { request: fetch },
-    }),
-  ).toBeFalsy();
-});
 
 test("a review is successfully created with a PAT", async () => {
   apiMocks.getUser();
@@ -357,6 +333,452 @@ test("when pull request does not exist or the token doesn't have access", async 
   expect(core.setFailed).toHaveBeenCalledWith(
     expect.stringContaining("doesn't have access"),
   );
+});
+
+test("title is valid", async () => {
+  apiMocks.getPull();
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      octokitOpts: { request: fetch },
+    }),
+  ).toBeTruthy();
+});
+
+test("title is empty", async () => {
+  apiMocks.getPull(200, { title: "" });
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      octokitOpts: { request: fetch },
+    }),
+  ).toBeFalsy();
+});
+
+test("title contains '(ship)' with caseSensitive: false", async () => {
+  apiMocks.getPull(200, { title: "(ship) it!" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      caseSensitive: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ship);
+});
+
+test("title contains '(ship)' with caseSensitive: true", async () => {
+  apiMocks.getPull(200, { title: "(ship) it!" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      caseSensitive: true,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ship);
+});
+
+test("title contains '(SHIP)' with caseSensitive: true", async () => {
+  apiMocks.getPull(200, { title: "(SHIP) it!" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      caseSensitive: true,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(undefined);
+});
+
+test("title contains 'Ship' with requireBrackets: false and caseSensitive: true", async () => {
+  apiMocks.getPull(200, { title: "Ship it!" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      caseSensitive: true,
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(undefined);
+});
+
+test("title contains '(ship)' with requireBrackets: true", async () => {
+  apiMocks.getPull(200, { title: "(ship) it!" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: true,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ship);
+});
+
+test("title contains '[show]' with requireBrackets: true", async () => {
+  apiMocks.getPull(200, { title: "[show] it!" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: true,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Show);
+});
+
+test("title contains '{ask}' with requireBrackets: true", async () => {
+  apiMocks.getPull(200, { title: "{ask} it!" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: true,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ask);
+});
+
+test("title contains '(ship it)' with requireBrackets: true", async () => {
+  apiMocks.getPull(200, { title: "(ship it)" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: true,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(undefined);
+});
+
+test("title contains '[show it]' with requireBrackets: true", async () => {
+  apiMocks.getPull(200, { title: "[show it]" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: true,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(undefined);
+});
+
+test("title contains '{ask it}' with requireBrackets: true", async () => {
+  apiMocks.getPull(200, { title: "{ask it}" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: true,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(undefined);
+});
+
+test("title contains 'ship (it)' with requireBrackets: true", async () => {
+  apiMocks.getPull(200, { title: "ship (it)" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: true,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(undefined);
+});
+
+test("title contains 'show [it]' with requireBrackets: true", async () => {
+  apiMocks.getPull(200, { title: "show [it]" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: true,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(undefined);
+});
+
+test("title contains '{ask it}' with requireBrackets: true", async () => {
+  apiMocks.getPull(200, { title: "ask {it}" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: true,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(undefined);
+});
+
+test("title contains 'ship it' with requireBrackets: true", async () => {
+  apiMocks.getPull(200, { title: "ship it" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: true,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(undefined);
+});
+
+test("title contains 'show it' with requireBrackets: true", async () => {
+  apiMocks.getPull(200, { title: "show it" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: true,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(undefined);
+});
+
+test("title contains 'ask it' with requireBrackets: true", async () => {
+  apiMocks.getPull(200, { title: "ask it" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: true,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(undefined);
+});
+
+test("title contains '(ship)' with requireBrackets: false", async () => {
+  apiMocks.getPull(200, { title: "(ship) it!" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ship);
+});
+
+test("title contains '[show]' with requireBrackets: false", async () => {
+  apiMocks.getPull(200, { title: "[show] it!" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Show);
+});
+
+test("title contains '{ask}' with requireBrackets: false", async () => {
+  apiMocks.getPull(200, { title: "{ask} it!" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ask);
+});
+
+test("title contains '(ship it)' with requireBrackets: false", async () => {
+  apiMocks.getPull(200, { title: "(ship it)" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ship);
+});
+
+test("title contains '[show it]' with requireBrackets: false", async () => {
+  apiMocks.getPull(200, { title: "[show it]" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Show);
+});
+
+test("title contains '{ask it}' with requireBrackets: false", async () => {
+  apiMocks.getPull(200, { title: "{ask it}" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ask);
+});
+
+test("title contains 'ship (it)' with requireBrackets: false", async () => {
+  apiMocks.getPull(200, { title: "ship (it)" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ship);
+});
+
+test("title contains 'show [it]' with requireBrackets: false", async () => {
+  apiMocks.getPull(200, { title: "show [it]" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Show);
+});
+
+test("title contains '{ask it}' with requireBrackets: false", async () => {
+  apiMocks.getPull(200, { title: "ask {it}" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ask);
+});
+
+test("title contains 'ship it' with requireBrackets: false", async () => {
+  apiMocks.getPull(200, { title: "ship it" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ship);
+});
+
+test("title contains 'show it' with requireBrackets: false", async () => {
+  apiMocks.getPull(200, { title: "show it" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Show);
+});
+
+test("title contains 'ask it' with requireBrackets: false", async () => {
+  apiMocks.getPull(200, { title: "ask it" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ask);
+});
+
+test("title contains 'ask it' with requireBrackets: false", async () => {
+  apiMocks.getPull(200, { title: "ask it" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ask);
+});
+
+test("title contains '(lgtm)' shipKeyword: 'lgtm'", async () => {
+  apiMocks.getPull(200, { title: "pr (lgtm)!" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      shipKeyword: "lgtm",
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ship);
 });
 
 function ghContext(): Context {

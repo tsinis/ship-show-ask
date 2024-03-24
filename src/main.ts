@@ -15,8 +15,7 @@ export async function run() {
     const caseSensitive = Boolean(core.getInput("case-sensitive"));
     const addLabel = Boolean(core.getInput("add-label"));
     const requireBrackets = Boolean(core.getInput("require-brackets"));
-    // Check the PR title
-    const titleIsValid = await validate({
+    const strategy = await validate({
       token,
       context: github.context,
       prNumber: pullRequestNumber,
@@ -28,7 +27,7 @@ export async function run() {
       requireBrackets: requireBrackets || undefined,
     });
 
-    if (!titleIsValid) return core.setFailed("Invalid PR title");
+    if (strategy === undefined) return core.setFailed("Invalid PR title");
 
     await approve({
       token,
