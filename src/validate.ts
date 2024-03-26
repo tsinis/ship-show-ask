@@ -43,12 +43,18 @@ export async function validate({
     return undefined;
   }
 
+  let strategy: Strategy | undefined = undefined;
   const client = github.getOctokit(token, octokitOpts);
-  let title: string | null = null;
+  const regex = buildRegexPattern(
+    shipKeyword || Strategy.Ship,
+    showKeyword || Strategy.Show,
+    askKeyword || Strategy.Ask,
+    requireBrackets !== undefined ? requireBrackets : true,
+    caseSensitive !== undefined ? caseSensitive : false,
+  );
 
   try {
     const { owner, repo } = context.repo;
-
     core.info(`Fetching pull request information`);
     const { data: pr } = await client.rest.pulls.get({
       owner,
@@ -56,15 +62,46 @@ export async function validate({
       pull_number: prNumber,
     });
 
-    core.info(`Adding label to pull request`);
-    await client.rest.issues.addLabels({
-      owner,
-      repo,
-      issue_number: prNumber,
-      labels: ["validated"],
-    });
-    core.info(`Adding label to pull request`);
-    title = pr.title.trim();
+    const title = pr.title.trim();
+    const match = title.match(regex);
+
+    if (!match) return logAndExit("No keyword match found!");
+
+    // Extract the keyword from the match
+    // If using the above regex, the keyword will be in one of these groups
+    const keywordWithoutBrackets = requireBrackets
+      ? match[2] || match[4] || match[6]
+      : match[0];
+    if (!keywordWithoutBrackets) return logAndExit("No brackets match found!");
+
+    switch (keywordWithoutBrackets.toLowerCase()) {
+      case shipKeyword.toLowerCase():
+        console.log("Detected Strategy.Ship");
+        strategy = Strategy.Ship;
+        break;
+      case showKeyword.toLowerCase():
+        console.log("Detected Strategy.Show");
+        strategy = Strategy.Show;
+        break;
+      case askKeyword.toLowerCase():
+        console.log("Detected Strategy.Ask");
+        strategy = Strategy.Ask;
+        break;
+      default:
+        return logAndExit("No matching keyword found!");
+    }
+
+    addLabel = addLabel !== undefined ? addLabel : true;
+    if (addLabel) {
+      await client.rest.issues.addLabels({
+        labels: [strategy],
+        owner,
+        repo,
+        issue_number: prNumber,
+      });
+    }
+
+    return strategy;
   } catch (error) {
     if (error instanceof RequestError) {
       switch (error.status) {
@@ -109,51 +146,23 @@ export async function validate({
     }
     return undefined;
   }
-  addLabel = addLabel !== undefined ? addLabel : true;
+}
 
-  /// TODO!: Title parsing part.
-  askKeyword = askKeyword || Strategy.Ask;
-  shipKeyword = shipKeyword || Strategy.Ship;
-  showKeyword = showKeyword || Strategy.Show;
-  caseSensitive = caseSensitive !== undefined ? caseSensitive : false;
-  requireBrackets = requireBrackets !== undefined ? requireBrackets : true;
-  // Prepare the keywords for the regular expression
-  const keywords = [shipKeyword, showKeyword, askKeyword];
-  const keywordPattern = keywords.join("|");
+function logAndExit(message: string) {
+  console.log(message);
+  return undefined;
+}
 
-  const regexPattern = requireBrackets
-    ? `\\[((${keywordPattern}))\\]|\\(((${keywordPattern}))\\)|\\{((${keywordPattern}))\\}` // Matches (keyword), [keyword], {keyword}
-    : `${keywordPattern}`; // Matches keyword without brackets
-
-  const flags = caseSensitive ? "" : "i";
-  const regex = new RegExp(regexPattern, flags);
-  const match = title.match(regex);
-
-  if (match) {
-    // Extract the keyword from the match
-    // If using the above regex, the keyword will be in one of these groups
-    const keywordWithoutBrackets = requireBrackets
-      ? match[2] || match[4] || match[6]
-      : match[0];
-    if (!keywordWithoutBrackets) return undefined;
-
-    switch (keywordWithoutBrackets.toLowerCase()) {
-      case shipKeyword.toLowerCase():
-        console.log("Returning Strategy.Ship");
-        return Strategy.Ship;
-      case showKeyword.toLowerCase():
-        console.log("Returning Strategy.Show");
-        return Strategy.Show;
-      case askKeyword.toLowerCase():
-        console.log("Returning Strategy.Ask");
-        return Strategy.Ask;
-      default:
-        console.log("No matching keyword found");
-        return undefined;
-    }
-  } else {
-    // If there's no match, return undefined
-    console.log("No match found");
-    return undefined;
-  }
+function buildRegexPattern(
+  shipKeyword: string,
+  showKeyword: string,
+  askKeyword: string,
+  requireBrackets: boolean,
+  caseSensitive: boolean,
+): RegExp {
+  const pattern = [shipKeyword, showKeyword, askKeyword].join("|");
+  const bracketPattern = requireBrackets
+    ? `\\[((${pattern}))\\]|\\(((${pattern}))\\)|\\{((${pattern}))\\}`
+    : pattern;
+  return new RegExp(bracketPattern, caseSensitive ? undefined : "i");
 }

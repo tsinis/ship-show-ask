@@ -388,6 +388,20 @@ test("title contains '(ship)' with caseSensitive: true", async () => {
   ).toBe(Strategy.Ship);
 });
 
+test("title contains '(shi)' with caseSensitive: false", async () => {
+  apiMocks.getPull(200, { title: "(shi) it!" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      caseSensitive: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(undefined);
+});
+
 test("title contains '(SHIP)' with caseSensitive: true", async () => {
   apiMocks.getPull(200, { title: "(SHIP) it!" });
   apiMocks.addLabels();
@@ -415,6 +429,22 @@ test("title contains 'Ship' with requireBrackets: false and caseSensitive: true"
       octokitOpts: { request: fetch },
     }),
   ).toBe(undefined);
+});
+
+test("title contains 'Ship' with requireBrackets: false and caseSensitive: true and custom shipKeyword", async () => {
+  apiMocks.getPull(200, { title: "Ship it!" });
+  apiMocks.addLabels();
+
+  expect(
+    await validate({
+      token: "gh-tok",
+      context: ghContext(),
+      shipKeyword: "Ship",
+      caseSensitive: true,
+      requireBrackets: false,
+      octokitOpts: { request: fetch },
+    }),
+  ).toBe(Strategy.Ship);
 });
 
 test("title contains '(ship)' with requireBrackets: true", async () => {

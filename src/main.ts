@@ -2,6 +2,7 @@ import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { approve } from "./approve";
 import { validate } from "./validate";
+import { Strategy } from "./types/strategy";
 
 export async function run() {
   try {
@@ -26,8 +27,9 @@ export async function run() {
       addLabel: addLabel || undefined,
       requireBrackets: requireBrackets || undefined,
     });
-
-    if (strategy === undefined) return core.setFailed("Invalid PR title");
+    if (strategy !== Strategy.Ship && strategy !== Strategy.Show) {
+      return console.log("This is not a Ship or Show PR! Skipping approval.");
+    }
 
     await approve({
       token,
