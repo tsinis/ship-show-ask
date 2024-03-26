@@ -14,6 +14,7 @@ interface ValidateTitleOptions {
   caseSensitive?: boolean;
   addLabel?: boolean;
   requireBrackets?: boolean;
+  fallbackToAsk?: boolean;
 
   // This lets us use the native fetch function in tests. @actions/github swaps out
   // the default fetch implementation with its own, which doesn't work with msw.
@@ -30,6 +31,7 @@ export async function validate({
   caseSensitive = false,
   addLabel = true,
   requireBrackets = true,
+  fallbackToAsk = false,
 
   octokitOpts, // For testing.
 }: ValidateTitleOptions): Promise<Strategy | undefined> {
@@ -44,6 +46,7 @@ export async function validate({
   }
 
   let strategy: Strategy | undefined = undefined;
+  fallbackToAsk = fallbackToAsk !== undefined ? fallbackToAsk : false;
   const client = github.getOctokit(token, octokitOpts);
   const regex = buildRegexPattern(
     shipKeyword || Strategy.Ship,
@@ -65,16 +68,16 @@ export async function validate({
     const title = pr.title.trim();
     const match = title.match(regex);
 
-    if (!match) return logAndExit("No keyword match found!");
+    if (!match) return logAndExit("No keyword match found!", fallbackToAsk);
 
     // Extract the keyword from the match
     // If using the above regex, the keyword will be in one of these groups
-    const keywordWithoutBrackets = requireBrackets
+    const keyword = requireBrackets
       ? match[2] || match[4] || match[6]
       : match[0];
-    if (!keywordWithoutBrackets) return logAndExit("No brackets match found!");
 
-    switch (keywordWithoutBrackets.toLowerCase()) {
+    if (!keyword) return logAndExit("No brackets match found!", fallbackToAsk);
+    switch (keyword.toLowerCase()) {
       case shipKeyword.toLowerCase():
         console.log("Detected Strategy.Ship");
         strategy = Strategy.Ship;
@@ -88,7 +91,7 @@ export async function validate({
         strategy = Strategy.Ask;
         break;
       default:
-        return logAndExit("No matching keyword found!");
+        return logAndExit("No matching keyword found!", fallbackToAsk);
     }
 
     addLabel = addLabel !== undefined ? addLabel : true;
@@ -148,9 +151,9 @@ export async function validate({
   }
 }
 
-function logAndExit(message: string) {
+function logAndExit(message: string, fallbackToAsk: boolean) {
   console.log(message);
-  return undefined;
+  return fallbackToAsk ? Strategy.Ask : undefined;
 }
 
 function buildRegexPattern(
