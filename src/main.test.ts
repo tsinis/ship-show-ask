@@ -5,6 +5,11 @@ import { setupServer } from "msw/node";
 import { approve } from "./approve";
 import { run } from "./main";
 
+jest.mock("./validate", () => {
+  const { Strategy } = require("./types/strategy");
+  return { validate: jest.fn().mockResolvedValue(Strategy.Ship) };
+});
+
 jest.mock("./approve");
 const mockedApprove = jest.mocked(approve);
 

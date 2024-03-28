@@ -68,34 +68,36 @@ export async function validate({
     const title = pr.title.trim();
     const match = title.match(regex);
 
-    if (!match) return logAndExit("No keyword match found!", fallbackToAsk);
+    if (match) {
+      // Extract the keyword from the match
+      // If using the above regex, the keyword will be in one of these groups
+      const keyword = requireBrackets
+        ? match[2] || match[4] || match[6]
+        : match[0];
 
-    // Extract the keyword from the match
-    // If using the above regex, the keyword will be in one of these groups
-    const keyword = requireBrackets
-      ? match[2] || match[4] || match[6]
-      : match[0];
-
-    if (!keyword) return logAndExit("No brackets match found!", fallbackToAsk);
-    switch (keyword.toLowerCase()) {
-      case shipKeyword.toLowerCase():
-        console.log("Detected Strategy.Ship");
-        strategy = Strategy.Ship;
-        break;
-      case showKeyword.toLowerCase():
-        console.log("Detected Strategy.Show");
-        strategy = Strategy.Show;
-        break;
-      case askKeyword.toLowerCase():
-        console.log("Detected Strategy.Ask");
-        strategy = Strategy.Ask;
-        break;
-      default:
-        return logAndExit("No matching keyword found!", fallbackToAsk);
+      switch (keyword.toLowerCase()) {
+        case shipKeyword.toLowerCase():
+          console.log("Detected Strategy.Ship");
+          strategy = Strategy.Ship;
+          break;
+        case showKeyword.toLowerCase():
+          console.log("Detected Strategy.Show");
+          strategy = Strategy.Show;
+          break;
+        case askKeyword.toLowerCase():
+          console.log("Detected Strategy.Ask");
+          strategy = Strategy.Ask;
+          break;
+        default:
+          strategy = fallbackToAsk ? Strategy.Ask : undefined;
+      }
+    } else {
+      console.log("No keyword match detected!");
+      strategy = fallbackToAsk ? Strategy.Ask : undefined;
     }
 
     addLabel = addLabel !== undefined ? addLabel : true;
-    if (addLabel) {
+    if (strategy !== undefined && addLabel) {
       await client.rest.issues.addLabels({
         labels: [strategy],
         owner,
@@ -139,7 +141,7 @@ export async function validate({
         default:
           core.setFailed(`Error (code ${error.status}): ${error.message}`);
       }
-      return undefined;
+      return strategy;
     }
 
     if (error instanceof Error) {
@@ -147,13 +149,8 @@ export async function validate({
     } else {
       core.setFailed("Unknown error");
     }
-    return undefined;
+    return strategy;
   }
-}
-
-function logAndExit(message: string, fallbackToAsk: boolean) {
-  console.log(message);
-  return fallbackToAsk ? Strategy.Ask : undefined;
 }
 
 function buildRegexPattern(
