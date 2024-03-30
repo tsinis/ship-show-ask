@@ -1,0 +1,22 @@
+name: Self Test
+on: [pull_request]
+
+jobs:
+  self-action-test:
+    name: This GitHub Action Test
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Test Local Action
+        if: github.actor == 'tsinis' || github.actor == 'dependabot[bot]'
+        uses: ./
+        with:
+          add-label: true
+          case-sensitive: true
+          fallback-to-ask: true
+          require-brackets: true
+          review-message: "Auto approved Ship or Ask PRs (from Dependabot/Author)"

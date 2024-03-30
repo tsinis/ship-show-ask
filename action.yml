@@ -2,7 +2,7 @@ name: 'Ship/Show/Ask'
 description: 'GitHub Action for a Ship, Show, Ask branching strategy'
 branding:
   icon: 'anchor'
-  color: 'green'
+  color: 'orange'
 inputs:
   github-token:
     default: ${{ github.token }}
@@ -11,8 +11,33 @@ inputs:
   pull-request-number:
     description: '(optional) The ID of a pull request to auto-approve. By default, this action tries to use the pull_request event payload.'
     required: false
-  review-message:
-    description: '(optional) The message of the pull request review.'
+  ship-keyword:
+    description: '(optional) The keyword for the Ship strategy, default to "ship".'
+    default: 'ship'
+    required: false
+  show-keyword:
+    description: '(optional) The keyword for the Show strategy, default to "show".'
+    default: 'show'
+    required: false
+  ask-keyword:
+    description: '(optional) The keyword for the Ask strategy, default to "ask".'
+    default: 'ask'
+    required: false
+  case-sensitive:
+    description: '(optional) Whether the keywords are case-sensitive, default to false.'
+    default: 'false'
+    required: false
+  add-label:
+    description: '(optional) Whether to add a label to the pull request based on the strategy, default to true.'
+    default: 'true'
+    required: false
+  require-brackets:
+    description: '(optional) Whether the keywords require brackets, default to true.'
+    default: 'true'
+    required: false
+  fallback-to-ask:
+    description: '(optional) Whether to fallback to the Ask strategy if no keyword is detected, default to false.'
+    default: 'false'
     required: false
 runs:
   using: 'node20'
