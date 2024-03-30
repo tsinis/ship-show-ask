@@ -29115,6 +29115,7 @@ function run() {
             const caseSensitive = Boolean(core.getInput("case-sensitive"));
             const addLabel = Boolean(core.getInput("add-label"));
             const requireBrackets = Boolean(core.getInput("require-brackets"));
+            const fallbackToAsk = Boolean(core.getInput("fallback-to-ask"));
             const strategy = yield (0, validate_1.validate)({
                 token,
                 context: github.context,
@@ -29125,9 +29126,10 @@ function run() {
                 caseSensitive: caseSensitive || undefined,
                 addLabel: addLabel || undefined,
                 requireBrackets: requireBrackets || undefined,
+                fallbackToAsk: fallbackToAsk || undefined,
             });
             if (strategy !== strategy_1.Strategy.Ship && strategy !== strategy_1.Strategy.Show) {
-                return console.log("This is not a Ship or Show PR! Skipping approval.");
+                return console.log("This is not a Ship or Show PR! Skipping approval.", strategy);
             }
             yield (0, approve_1.approve)({
                 token,

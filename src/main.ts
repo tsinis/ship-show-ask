@@ -16,6 +16,7 @@ export async function run() {
     const caseSensitive = Boolean(core.getInput("case-sensitive"));
     const addLabel = Boolean(core.getInput("add-label"));
     const requireBrackets = Boolean(core.getInput("require-brackets"));
+    const fallbackToAsk = Boolean(core.getInput("fallback-to-ask"));
     const strategy = await validate({
       token,
       context: github.context,
@@ -26,9 +27,13 @@ export async function run() {
       caseSensitive: caseSensitive || undefined,
       addLabel: addLabel || undefined,
       requireBrackets: requireBrackets || undefined,
+      fallbackToAsk: fallbackToAsk || undefined,
     });
     if (strategy !== Strategy.Ship && strategy !== Strategy.Show) {
-      return console.log("This is not a Ship or Show PR! Skipping approval.");
+      return console.log(
+        "This is not a Ship or Show PR! Skipping approval.",
+        strategy,
+      );
     }
 
     await approve({
