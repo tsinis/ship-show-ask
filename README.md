@@ -8,7 +8,7 @@ This is a fork of the [Auto Approve](https://github.com/marketplace/actions/auto
 
 ## Usage instructions
 
-Create a workflow file (e.g. `.github/workflows/ship-show-ask.yml`) that contains a step that `uses: tsinis/ship-show-ask@v0.1`. Here's an example workflow file:
+Create a workflow file (e.g. `.github/workflows/ship-show-ask.yml`) that contains a step that `uses: tsinis/ship-show-ask@v0.1.0`. Here's an example workflow file:
 
 ```yaml
 name: Auto approve Ship/Show PRs
@@ -20,7 +20,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: tsinis/ship-show-ask@v0.1
+      - uses: tsinis/ship-show-ask@v0.1.0
         with:
           ship-keyword: 'lgtm' # optional, default to 'ship'
           show-keyword: 'lgty' # optional, default to 'show'
@@ -63,7 +63,7 @@ jobs:
       pull-requests: write
     if: github.actor == 'dependabot[bot]'
     steps:
-      - uses: tsinis/ship-show-ask@v0.1
+      - uses: tsinis/ship-show-ask@v0.1.0
 ```
 
 If you want to use this action from a workflow file that doesn't run on the `pull_request` or `pull_request_target` events, use the `pull-request-number` input:
@@ -84,7 +84,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-    - uses: tsinis/ship-show-ask@v0.1
+    - uses: tsinis/ship-show-ask@v0.1.0
       with:
         pull-request-number: ${{ github.event.inputs.pullRequestNumber }}
 ```
@@ -102,7 +102,7 @@ jobs:
       pull-requests: write
     if: github.actor == 'dependabot[bot]'
     steps:
-      - uses: tsinis/ship-show-ask@v0.1
+      - uses: tsinis/ship-show-ask@v0.1.0
         with:
           review-message: "Auto approved automated PR (from Dependabot)"
 ```
@@ -121,7 +121,7 @@ jobs:
   ship-show-ask:
     runs-on: ubuntu-latest
     steps:
-      - uses: tsinis/ship-show-ask@v0.1
+      - uses: tsinis/ship-show-ask@v0.1.0
         with:
           github-token: ${{ secrets.SOME_USERS_PAT }}
 ```
