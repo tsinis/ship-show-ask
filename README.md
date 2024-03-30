@@ -4,23 +4,25 @@
 
 **Name:** `tsinis/ship-show-ask`
 
-This is a fork of the [Auto Approve](https://github.com/marketplace/actions/auto-approve) GitHub Action adjusted for a Ship, Show, Ask branching strategy.
+This action will get information about the preferred ship/show/ask strategy of the pull request from its title (by searching for keywords in the title). This is a fork of the [Auto Approve](https://github.com/marketplace/actions/auto-approve) GitHub Action adjusted for a Ship, Show, Ask branching strategy.
 
 ## Usage instructions
 
-Create a workflow file (e.g. `.github/workflows/ship-show-ask.yml`) that contains a step that `uses: tsinis/ship-show-ask@v0.1.0`. Here's an example workflow file:
+Create a workflow file (e.g. `.github/workflows/ship-show-ask.yml`) that contains a step that `uses: tsinis/ship-show-ask@v0.1.1`. Here's an example workflow file:
 
 ```yaml
 name: Auto approve Ship/Show PRs
-on: pull_request_target
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
 
 jobs:
-  build:
+  ship-show-ask:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
-      - uses: tsinis/ship-show-ask@v0.1.0
+      - uses: tsinis/ship-show-ask@v0.1.1
         with:
           ship-keyword: 'lgtm' # optional, default to 'ship'
           show-keyword: 'lgty' # optional, default to 'show'
@@ -29,6 +31,9 @@ jobs:
           add-label: false # optional, default to true
           require-brackets: false # optional, default to true
           fallback-to-ask: true # optional, default to false
+          review-message: "Auto approved PR!" # optional message to use in approved pull request.
+          # github-token: ${{ secrets.SOME_USERS_PAT }} # optional GITHUB_TOKEN secret, default to ${{ github.token }}
+          # pull-request-number: 1 # optional ID of a pull request to approve. By default, this action tries to use the pull_request event payload.
 ```
 
 In this example, the action is configured to recognize 'lgtm', 'lgty', and 'check' as the keywords for the respective strategies. The keywords are case-sensitive, a label will not be added to the pull request based on the strategy, the keywords doesn't require brackets, and if no keyword is detected, the action will fallback to the Ask strategy.
@@ -47,6 +52,9 @@ You can customize these options by changing the values in the `with` block.
 - `add-label`: Whether to add a label to the pull request based on the strategy. Default is 'true'.
 - `require-brackets`: Whether the keywords require brackets. Default is 'true'.
 - `fallback-to-ask`: Whether to fallback to the Ask strategy if no keyword is detected. Default is 'false'.
+- `review-message`: Message to use on PR approval.
+- `github-token`: GITHUB_TOKEN secret, default to ${{ github.token }}
+- `pull-request-number`: id of a pull request to approve. By default, this action tries to use the pull_request event payload.
 
 ### Other examples
 
@@ -63,7 +71,7 @@ jobs:
       pull-requests: write
     if: github.actor == 'dependabot[bot]'
     steps:
-      - uses: tsinis/ship-show-ask@v0.1.0
+      - uses: tsinis/ship-show-ask@v0.1.1
 ```
 
 If you want to use this action from a workflow file that doesn't run on the `pull_request` or `pull_request_target` events, use the `pull-request-number` input:
@@ -84,7 +92,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-    - uses: tsinis/ship-show-ask@v0.1.0
+    - uses: tsinis/ship-show-ask@v0.1.1
       with:
         pull-request-number: ${{ github.event.inputs.pullRequestNumber }}
 ```
@@ -93,7 +101,9 @@ Optionally, you can provide a message for the review:
 
 ```yaml
 name: Ship/Show Dependabot PRs with a message
-on: pull_request_target
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
 
 jobs:
   ship-show-ask:
@@ -102,7 +112,7 @@ jobs:
       pull-requests: write
     if: github.actor == 'dependabot[bot]'
     steps:
-      - uses: tsinis/ship-show-ask@v0.1.0
+      - uses: tsinis/ship-show-ask@v0.1.1
         with:
           review-message: "Auto approved automated PR (from Dependabot)"
 ```
@@ -115,13 +125,15 @@ To approve the pull request as a different user, pass a GitHub Personal Access T
 
 ```yaml
 name: Auto approve Ship/Show PRs
-on: pull_request_target
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
 
 jobs:
   ship-show-ask:
     runs-on: ubuntu-latest
     steps:
-      - uses: tsinis/ship-show-ask@v0.1.0
+      - uses: tsinis/ship-show-ask@v0.1.1
         with:
           github-token: ${{ secrets.SOME_USERS_PAT }}
 ```
@@ -144,4 +156,4 @@ If you're using a [CODEOWNERS file](https://docs.github.com/en/github/creating-c
 
 ## Development and release process
 
-Each major version corresponds to a branch (e.g. `v0.1`, `v1.0`). Releases are tagged with semver-style version numbers (e.g. `v1.2.3`).
+Each major version corresponds to a branch (e.g. `v0.1`, `v1.0`). Releases are tagged with semver-style version numbers (e.g. `v0.1.2`).
