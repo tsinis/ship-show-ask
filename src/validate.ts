@@ -96,7 +96,9 @@ export async function validate({
       strategy = fallbackToAsk ? Strategy.Ask : undefined;
     }
 
+    console.log("Strategy to be used:", strategy);
     addLabel = addLabel !== undefined ? addLabel : true;
+    console.log("Add label:", addLabel);
     if (strategy !== undefined && addLabel) {
       await client.rest.issues.addLabels({
         labels: [strategy],

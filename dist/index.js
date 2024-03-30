@@ -29280,7 +29280,9 @@ function validate(_a) {
                 console.log("No keyword match detected!");
                 strategy = fallbackToAsk ? strategy_1.Strategy.Ask : undefined;
             }
+            console.log("Strategy to be used:", strategy);
             addLabel = addLabel !== undefined ? addLabel : true;
+            console.log("Add label:", addLabel);
             if (strategy !== undefined && addLabel) {
                 yield client.rest.issues.addLabels({
                     labels: [strategy],
