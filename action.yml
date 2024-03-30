@@ -1,5 +1,5 @@
 name: 'Ship/Show/Ask'
-description: 'GitHub Action for a Ship, Show, Ask branching strategy'
+description: 'GitHub Action for a Ship, Show, Ask branching strategy from PR title'
 branding:
   icon: 'anchor'
   color: 'orange'
@@ -10,6 +10,9 @@ inputs:
     required: false
   pull-request-number:
     description: '(optional) The ID of a pull request to auto-approve. By default, this action tries to use the pull_request event payload.'
+    required: false
+  review-message:
+    description: '(optional) The message of the pull request review.'
     required: false
   ship-keyword:
     description: '(optional) The keyword for the Ship strategy, default to "ship".'
