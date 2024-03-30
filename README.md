@@ -1,19 +1,17 @@
-# Auto Approve GitHub Action
+# Ship/Show/Ask GitHub Action
 
-[![CI](https://github.com/hmarr/auto-approve-action/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/hmarr/auto-approve-action/actions/workflows/ci.yml)
+[![CI](https://github.com/tsinis/ship-show-ask/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/tsinis/ship-show-ask/actions/workflows/ci.yml)
 
-**Name:** `hmarr/auto-approve-action`
+**Name:** `tsinis/ship-show-ask`
 
-Automatically approve GitHub pull requests.
-
-**Important:** use v4 or later, as earlier versions use deprecated versions of node. If you're on an old version of GHES (with an old version of the node interpreter) you may need to use an easier version until you can upgrade.
+This is a fork of the [Auto Approve](https://github.com/marketplace/actions/auto-approve) GitHub Action adjusted for a Ship, Show, Ask branching strategy.
 
 ## Usage instructions
 
-Create a workflow file (e.g. `.github/workflows/auto-approve.yml`) that contains a step that `uses: hmarr/auto-approve-action@v4`. Here's an example workflow file:
+Create a workflow file (e.g. `.github/workflows/ship-show-ask.yml`) that contains a step that `uses: tsinis/ship-show-ask@v0.1.0`. Here's an example workflow file:
 
 ```yaml
-name: Auto approve
+name: Auto approve Ship/Show PRs
 on: pull_request_target
 
 jobs:
@@ -22,45 +20,71 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: hmarr/auto-approve-action@v4
+      - uses: tsinis/ship-show-ask@v0.1.0
+        with:
+          ship-keyword: 'lgtm' # optional, default to 'ship'
+          show-keyword: 'lgty' # optional, default to 'show'
+          ask-keyword: 'check' # optional, default to 'ask'
+          case-sensitive: true # optional, default to false
+          add-label: false # optional, default to true
+          require-brackets: false # optional, default to true
+          fallback-to-ask: true # optional, default to false
 ```
 
-Combine with an `if` clause to only auto-approve certain users. For example, to auto-approve [Dependabot][dependabot] pull requests, use:
+In this example, the action is configured to recognize 'lgtm', 'lgty', and 'check' as the keywords for the respective strategies. The keywords are case-sensitive, a label will not be added to the pull request based on the strategy, the keywords doesn't require brackets, and if no keyword is detected, the action will fallback to the Ask strategy.
+
+You can customize these options by changing the values in the `with` block.
+
+> [!TIP]
+> All of these inputs are optional, and if not provided, the action will use the default values.
+
+### Inputs
+
+- `ship-keyword`: The keyword for the Ship strategy. Default is 'ship'.
+- `show-keyword`: The keyword for the Show strategy. Default is 'show'.
+- `ask-keyword`: The keyword for the Ask strategy. Default is 'ask'.
+- `case-sensitive`: Whether the keywords are case-sensitive. Default is 'false'.
+- `add-label`: Whether to add a label to the pull request based on the strategy. Default is 'true'.
+- `require-brackets`: Whether the keywords require brackets. Default is 'true'.
+- `fallback-to-ask`: Whether to fallback to the Ask strategy if no keyword is detected. Default is 'false'.
+
+### Other examples
+
+You can combine action with an `if` clause to only ship-show-ask certain users. For example, to ship-show-ask [Dependabot][dependabot] pull requests, use:
 
 ```yaml
-name: Auto approve
-
+name: Ship/Show Dependabot PRs
 on: pull_request_target
 
 jobs:
-  auto-approve:
+  ship-show-ask:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     if: github.actor == 'dependabot[bot]'
     steps:
-      - uses: hmarr/auto-approve-action@v4
+      - uses: tsinis/ship-show-ask@v0.1.0
 ```
 
 If you want to use this action from a workflow file that doesn't run on the `pull_request` or `pull_request_target` events, use the `pull-request-number` input:
 
 ```yaml
-name: Auto approve
+name: Auto approve Ship/Show PRs
 
 on:
   workflow_dispatch:
-    inputs: 
+    inputs:
       pullRequestNumber:
-        description: Pull request number to auto-approve
+        description: Pull request number for ship-show-ask
         required: false
 
 jobs:
-  auto-approve:
+  ship-show-ask:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
-    - uses: hmarr/auto-approve-action@v4
+    - uses: tsinis/ship-show-ask@v0.1.0
       with:
         pull-request-number: ${{ github.event.inputs.pullRequestNumber }}
 ```
@@ -68,20 +92,19 @@ jobs:
 Optionally, you can provide a message for the review:
 
 ```yaml
-name: Auto approve
-
+name: Ship/Show Dependabot PRs with a message
 on: pull_request_target
 
 jobs:
-  auto-approve:
+  ship-show-ask:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     if: github.actor == 'dependabot[bot]'
     steps:
-      - uses: hmarr/auto-approve-action@v4
+      - uses: tsinis/ship-show-ask@v0.1.0
         with:
-          review-message: "Auto approved automated PR"
+          review-message: "Auto approved automated PR (from Dependabot)"
 ```
 
 ### Approving on behalf of a different user
@@ -91,15 +114,14 @@ By default, this will use the [automatic GitHub token](https://docs.github.com/e
 To approve the pull request as a different user, pass a GitHub Personal Access Token into the `github-token` input. In order to approve the pull request, the token needs the `repo` scope enabled.
 
 ```yaml
-name: Auto approve
-
+name: Auto approve Ship/Show PRs
 on: pull_request_target
 
 jobs:
-  auto-approve:
+  ship-show-ask:
     runs-on: ubuntu-latest
     steps:
-      - uses: hmarr/auto-approve-action@v4
+      - uses: tsinis/ship-show-ask@v0.1.0
         with:
           github-token: ${{ secrets.SOME_USERS_PAT }}
 ```
@@ -122,4 +144,4 @@ If you're using a [CODEOWNERS file](https://docs.github.com/en/github/creating-c
 
 ## Development and release process
 
-Each major version corresponds to a branch (e.g. `v3`, `v4`). The latest major version (`v4` at the time of writing) is the repository's default branch. Releases are tagged with semver-style version numbers (e.g. `v1.2.3`).
+Each major version corresponds to a branch (e.g. `v0.1`, `v1.0`). Releases are tagged with semver-style version numbers (e.g. `v1.2.3`).

@@ -18032,6 +18032,9 @@ function httpRedirectFetch (fetchParams, response) {
     // https://fetch.spec.whatwg.org/#cors-non-wildcard-request-header-name
     request.headersList.delete('authorization')
 
+    // https://fetch.spec.whatwg.org/#authentication-entries
+    request.headersList.delete('proxy-authorization', true)
+
     // "Cookie" and "Host" are forbidden request-headers, which undici doesn't implement.
     request.headersList.delete('cookie')
     request.headersList.delete('host')
@@ -28948,11 +28951,11 @@ exports.approve = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const request_error_1 = __nccwpck_require__(537);
-function approve({ token, context, prNumber, reviewMessage, octokitOpts, }) {
-    var _a, _b;
-    return __awaiter(this, void 0, void 0, function* () {
+function approve(_a) {
+    return __awaiter(this, arguments, void 0, function* ({ token, context, prNumber, reviewMessage, octokitOpts, }) {
+        var _b, _c;
         if (!prNumber) {
-            prNumber = (_a = context.payload.pull_request) === null || _a === void 0 ? void 0 : _a.number;
+            prNumber = (_b = context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.number;
         }
         if (!prNumber) {
             core.setFailed("Event payload missing `pull_request` key, and no `pull-request-number` provided as input." +
@@ -28979,7 +28982,7 @@ function approve({ token, context, prNumber, reviewMessage, octokitOpts, }) {
             // If there's an approved review from a user, but there's an outstanding review request,
             // we need to create a new review. Review requests mean that existing "APPROVED" reviews
             // don't count towards the mergeability of the PR.
-            const outstandingReviewRequest = (_b = pr.requested_reviewers) === null || _b === void 0 ? void 0 : _b.some((reviewer) => reviewer.login == login);
+            const outstandingReviewRequest = (_c = pr.requested_reviewers) === null || _c === void 0 ? void 0 : _c.some((reviewer) => reviewer.login == login);
             if (alreadyReviewed && !outstandingReviewRequest) {
                 core.info(`Current user already approved pull request #${prNumber}, nothing to do`);
                 return false;
@@ -29098,15 +29101,38 @@ exports.run = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const approve_1 = __nccwpck_require__(6609);
+const validate_1 = __nccwpck_require__(4953);
+const strategy_1 = __nccwpck_require__(3857);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             const token = core.getInput("github-token");
             const reviewMessage = core.getInput("review-message");
+            const pullRequestNumber = prNumber();
+            const shipKeyword = core.getInput("ship-keyword");
+            const showKeyword = core.getInput("show-keyword");
+            const askKeyword = core.getInput("ask-keyword");
+            const caseSensitive = Boolean(core.getInput("case-sensitive"));
+            const addLabel = Boolean(core.getInput("add-label"));
+            const requireBrackets = Boolean(core.getInput("require-brackets"));
+            const strategy = yield (0, validate_1.validate)({
+                token,
+                context: github.context,
+                prNumber: pullRequestNumber,
+                shipKeyword: shipKeyword || undefined,
+                showKeyword: showKeyword || undefined,
+                askKeyword: askKeyword || undefined,
+                caseSensitive: caseSensitive || undefined,
+                addLabel: addLabel || undefined,
+                requireBrackets: requireBrackets || undefined,
+            });
+            if (strategy !== strategy_1.Strategy.Ship && strategy !== strategy_1.Strategy.Show) {
+                return console.log("This is not a Ship or Show PR! Skipping approval.");
+            }
             yield (0, approve_1.approve)({
                 token,
                 context: github.context,
-                prNumber: prNumber(),
+                prNumber: pullRequestNumber,
                 reviewMessage: reviewMessage || undefined,
             });
         }
@@ -29137,6 +29163,179 @@ function prNumber() {
 }
 if (require.main === require.cache[eval('__filename')]) {
     run();
+}
+
+
+/***/ }),
+
+/***/ 3857:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Strategy = void 0;
+var Strategy;
+(function (Strategy) {
+    Strategy["Ship"] = "ship";
+    Strategy["Show"] = "show";
+    Strategy["Ask"] = "ask";
+})(Strategy || (exports.Strategy = Strategy = {}));
+
+
+/***/ }),
+
+/***/ 4953:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.validate = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const github = __importStar(__nccwpck_require__(5438));
+const strategy_1 = __nccwpck_require__(3857);
+const request_error_1 = __nccwpck_require__(537);
+function validate(_a) {
+    return __awaiter(this, arguments, void 0, function* ({ token, context, prNumber, shipKeyword = strategy_1.Strategy.Ship, showKeyword = strategy_1.Strategy.Show, askKeyword = strategy_1.Strategy.Ask, caseSensitive = false, addLabel = true, requireBrackets = true, fallbackToAsk = false, octokitOpts, // For testing.
+     }) {
+        var _b;
+        if (!prNumber)
+            prNumber = (_b = context.payload.pull_request) === null || _b === void 0 ? void 0 : _b.number;
+        if (!prNumber) {
+            core.setFailed("Event payload missing `pull_request` key, and no `pull-request-number` provided as input." +
+                "Make sure you're triggering this action on the `pull_request` or `pull_request_target` events.");
+            return undefined;
+        }
+        let strategy = undefined;
+        fallbackToAsk = fallbackToAsk !== undefined ? fallbackToAsk : false;
+        const client = github.getOctokit(token, octokitOpts);
+        const regex = buildRegexPattern(shipKeyword || strategy_1.Strategy.Ship, showKeyword || strategy_1.Strategy.Show, askKeyword || strategy_1.Strategy.Ask, requireBrackets !== undefined ? requireBrackets : true, caseSensitive !== undefined ? caseSensitive : false);
+        try {
+            const { owner, repo } = context.repo;
+            core.info(`Fetching pull request information`);
+            const { data: pr } = yield client.rest.pulls.get({
+                owner,
+                repo,
+                pull_number: prNumber,
+            });
+            const title = pr.title.trim();
+            const match = title.match(regex);
+            if (match) {
+                // Extract the keyword from the match
+                // If using the above regex, the keyword will be in one of these groups
+                const keyword = requireBrackets
+                    ? match[2] || match[4] || match[6]
+                    : match[0];
+                switch (keyword.toLowerCase()) {
+                    case shipKeyword.toLowerCase():
+                        console.log("Detected Strategy.Ship");
+                        strategy = strategy_1.Strategy.Ship;
+                        break;
+                    case showKeyword.toLowerCase():
+                        console.log("Detected Strategy.Show");
+                        strategy = strategy_1.Strategy.Show;
+                        break;
+                    case askKeyword.toLowerCase():
+                        console.log("Detected Strategy.Ask");
+                        strategy = strategy_1.Strategy.Ask;
+                        break;
+                    default:
+                        strategy = fallbackToAsk ? strategy_1.Strategy.Ask : undefined;
+                }
+            }
+            else {
+                console.log("No keyword match detected!");
+                strategy = fallbackToAsk ? strategy_1.Strategy.Ask : undefined;
+            }
+            addLabel = addLabel !== undefined ? addLabel : true;
+            if (strategy !== undefined && addLabel) {
+                yield client.rest.issues.addLabels({
+                    labels: [strategy],
+                    owner,
+                    repo,
+                    issue_number: prNumber,
+                });
+            }
+            return strategy;
+        }
+        catch (error) {
+            if (error instanceof request_error_1.RequestError) {
+                switch (error.status) {
+                    case 401:
+                        core.setFailed(`${error.message}. Please check that the \`github-token\` input ` +
+                            "parameter is set correctly.");
+                        break;
+                    case 403:
+                        core.setFailed(`${error.message}. In some cases, the GitHub token used for actions triggered ` +
+                            "from `pull_request` events are read-only, which can cause this problem. " +
+                            "Switching to the `pull_request_target` event typically resolves this issue.");
+                        break;
+                    case 404:
+                        core.setFailed(`${error.message}. This typically means the token you're using doesn't have ` +
+                            "access to this repository. Use the built-in `${{ secrets.GITHUB_TOKEN }}` token " +
+                            "or review the scopes assigned to your personal access token.");
+                        break;
+                    case 422:
+                        core.setFailed(`${error.message}. This typically happens when you try to approve the pull ` +
+                            "request with the same user account that created the pull request. Try using " +
+                            "the built-in `${{ secrets.GITHUB_TOKEN }}` token, or if you're using a personal " +
+                            "access token, use one that belongs to a dedicated bot account.");
+                        break;
+                    default:
+                        core.setFailed(`Error (code ${error.status}): ${error.message}`);
+                }
+                return strategy;
+            }
+            if (error instanceof Error) {
+                core.setFailed(error);
+            }
+            else {
+                core.setFailed("Unknown error");
+            }
+            return strategy;
+        }
+    });
+}
+exports.validate = validate;
+function buildRegexPattern(shipKeyword, showKeyword, askKeyword, requireBrackets, caseSensitive) {
+    const pattern = [shipKeyword, showKeyword, askKeyword].join("|");
+    const bracketPattern = requireBrackets
+        ? `\\[((${pattern}))\\]|\\(((${pattern}))\\)|\\{((${pattern}))\\}`
+        : pattern;
+    return new RegExp(bracketPattern, caseSensitive ? undefined : "i");
 }
 
 
