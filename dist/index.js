@@ -29253,7 +29253,8 @@ function validate(_a) {
                 repo,
                 pull_number: prNumber,
             });
-            const title = pr.title.trim().normalize();
+            console.log(`Regex: ${regex}`);
+            const title = pr.title.trim().normalize().replace(/"/g, "");
             console.log(`Actual PR Title Before Match: "${title}"`);
             const match = title.match(regex);
             console.log(`Match Result: ${match}`);
@@ -29261,9 +29262,6 @@ function validate(_a) {
                 .split("")
                 .map((c) => c.charCodeAt(0).toString(16))
                 .join(" "));
-            console.log(`Regex: ${regex}`);
-            console.log(`Title: "${title}"`);
-            console.log(`Match: ${match}`);
             if (match) {
                 // Extract the keyword from the match
                 // If using the above regex, the keyword will be in one of these groups
