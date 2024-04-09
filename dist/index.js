@@ -29244,7 +29244,11 @@ function validate(_a) {
         let strategy = undefined;
         fallbackToAsk = fallbackToAsk !== undefined ? fallbackToAsk : false;
         const client = github.getOctokit(token, octokitOpts);
-        const regex = buildRegexPattern(shipKeyword || strategy_1.Strategy.Ship, showKeyword || strategy_1.Strategy.Show, askKeyword || strategy_1.Strategy.Ask, requireBrackets !== undefined ? requireBrackets : true, caseSensitive !== undefined ? caseSensitive : false);
+        caseSensitive = String(caseSensitive).toLowerCase() === "true";
+        console.log(`Case Sensitive: ${caseSensitive}`);
+        requireBrackets = String(requireBrackets).toLowerCase() === "true";
+        console.log(`Require Brackets: ${requireBrackets}`);
+        const regex = buildRegexPattern(shipKeyword || strategy_1.Strategy.Ship, showKeyword || strategy_1.Strategy.Show, askKeyword || strategy_1.Strategy.Ask, requireBrackets, caseSensitive);
         try {
             const { owner, repo } = context.repo;
             core.info(`Fetching pull request information`);
@@ -29254,15 +29258,10 @@ function validate(_a) {
                 pull_number: prNumber,
             });
             console.log(`Regex: ${regex}`);
-            console.log(`Case Sensitive: ${caseSensitive}`);
             const title = pr.title.trim().normalize().replace(/"/g, "");
             console.log(`Actual PR Title Before Match: "${title}"`);
             const match = title.match(regex);
             console.log(`Match Result: ${match}`);
-            console.log(title
-                .split("")
-                .map((c) => c.charCodeAt(0).toString(16))
-                .join(" "));
             if (match) {
                 // Extract the keyword from the match
                 // If using the above regex, the keyword will be in one of these groups

@@ -48,12 +48,16 @@ export async function validate({
   let strategy: Strategy | undefined = undefined;
   fallbackToAsk = fallbackToAsk !== undefined ? fallbackToAsk : false;
   const client = github.getOctokit(token, octokitOpts);
+  caseSensitive = String(caseSensitive).toLowerCase() === "true";
+  console.log(`Case Sensitive: ${caseSensitive}`);
+  requireBrackets = String(requireBrackets).toLowerCase() === "true";
+  console.log(`Require Brackets: ${requireBrackets}`);
   const regex = buildRegexPattern(
     shipKeyword || Strategy.Ship,
     showKeyword || Strategy.Show,
     askKeyword || Strategy.Ask,
-    requireBrackets !== undefined ? requireBrackets : true,
-    caseSensitive !== undefined ? caseSensitive : false,
+    requireBrackets,
+    caseSensitive,
   );
 
   try {
@@ -66,17 +70,10 @@ export async function validate({
     });
 
     console.log(`Regex: ${regex}`);
-    console.log(`Case Sensitive: ${caseSensitive}`);
     const title = pr.title.trim().normalize().replace(/"/g, "");
     console.log(`Actual PR Title Before Match: "${title}"`);
     const match = title.match(regex);
     console.log(`Match Result: ${match}`);
-    console.log(
-      title
-        .split("")
-        .map((c) => c.charCodeAt(0).toString(16))
-        .join(" "),
-    );
 
     if (match) {
       // Extract the keyword from the match
