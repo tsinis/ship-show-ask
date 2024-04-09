@@ -48,9 +48,7 @@ export async function validate({
   let strategy: Strategy | undefined = undefined;
   fallbackToAsk = fallbackToAsk !== undefined ? fallbackToAsk : false;
   const client = github.getOctokit(token, octokitOpts);
-  caseSensitive = String(caseSensitive).toLowerCase() === "true";
   console.log(`Case Sensitive: ${caseSensitive}`);
-  requireBrackets = String(requireBrackets).toLowerCase() === "true";
   console.log(`Require Brackets: ${requireBrackets}`);
   const regex = buildRegexPattern(
     shipKeyword || Strategy.Ship,
