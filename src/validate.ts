@@ -65,8 +65,16 @@ export async function validate({
       pull_number: prNumber,
     });
 
-    const title = pr.title.trim();
+    const title = pr.title.trim().normalize();
+    console.log(`Actual PR Title Before Match: "${title}"`);
     const match = title.match(regex);
+    console.log(`Match Result: ${match}`);
+    console.log(
+      title
+        .split("")
+        .map((c) => c.charCodeAt(0).toString(16))
+        .join(" "),
+    );
 
     console.log(`Regex: ${regex}`);
     console.log(`Title: "${title}"`);
