@@ -29255,6 +29255,9 @@ function validate(_a) {
             });
             const title = pr.title.trim();
             const match = title.match(regex);
+            console.log(`Regex: ${regex}`);
+            console.log(`Title: "${title}"`);
+            console.log(`Match: ${match}`);
             if (match) {
                 // Extract the keyword from the match
                 // If using the above regex, the keyword will be in one of these groups
