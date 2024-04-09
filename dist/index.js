@@ -29254,6 +29254,7 @@ function validate(_a) {
                 pull_number: prNumber,
             });
             console.log(`Regex: ${regex}`);
+            console.log(`Case Sensitive: ${caseSensitive}`);
             const title = pr.title.trim().normalize().replace(/"/g, "");
             console.log(`Actual PR Title Before Match: "${title}"`);
             const match = title.match(regex);
