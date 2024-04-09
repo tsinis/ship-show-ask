@@ -166,5 +166,5 @@ function buildRegexPattern(
   const bracketPattern = requireBrackets
     ? `\\[((${pattern}))\\]|\\(((${pattern}))\\)|\\{((${pattern}))\\}`
     : pattern;
-  return new RegExp(bracketPattern, caseSensitive ? undefined : "i");
+  return new RegExp(bracketPattern, caseSensitive ? "" : "i");
 }

@@ -1,6 +1,6 @@
 {
   "name": "ship-show-ask",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "GitHub Action for a Ship, Show, Ask branching strategy from PR title",
   "main": "dist/main.ts",
   "scripts": {
