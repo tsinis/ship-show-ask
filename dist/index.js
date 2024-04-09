@@ -29112,10 +29112,10 @@ function run() {
             const shipKeyword = core.getInput("ship-keyword");
             const showKeyword = core.getInput("show-keyword");
             const askKeyword = core.getInput("ask-keyword");
-            const caseSensitive = Boolean(core.getInput("case-sensitive"));
-            const addLabel = Boolean(core.getInput("add-label"));
-            const requireBrackets = Boolean(core.getInput("require-brackets"));
-            const fallbackToAsk = Boolean(core.getInput("fallback-to-ask"));
+            const caseSensitive = core.getInput("case-sensitive") === "true";
+            const addLabel = core.getInput("add-label") === "true";
+            const requireBrackets = core.getInput("require-brackets") === "true";
+            const fallbackToAsk = core.getInput("fallback-to-ask") === "true";
             const strategy = yield (0, validate_1.validate)({
                 token,
                 context: github.context,
@@ -29123,10 +29123,10 @@ function run() {
                 shipKeyword: shipKeyword || undefined,
                 showKeyword: showKeyword || undefined,
                 askKeyword: askKeyword || undefined,
-                caseSensitive: caseSensitive || undefined,
-                addLabel: addLabel || undefined,
-                requireBrackets: requireBrackets || undefined,
-                fallbackToAsk: fallbackToAsk || undefined,
+                caseSensitive: caseSensitive,
+                addLabel: addLabel,
+                requireBrackets: requireBrackets,
+                fallbackToAsk: fallbackToAsk,
             });
             if (strategy !== strategy_1.Strategy.Ship && strategy !== strategy_1.Strategy.Show) {
                 return console.log("This is not a Ship or Show PR! Skipping approval.", strategy);
@@ -29244,7 +29244,9 @@ function validate(_a) {
         let strategy = undefined;
         fallbackToAsk = fallbackToAsk !== undefined ? fallbackToAsk : false;
         const client = github.getOctokit(token, octokitOpts);
-        const regex = buildRegexPattern(shipKeyword || strategy_1.Strategy.Ship, showKeyword || strategy_1.Strategy.Show, askKeyword || strategy_1.Strategy.Ask, requireBrackets !== undefined ? requireBrackets : true, caseSensitive !== undefined ? caseSensitive : false);
+        console.log(`Case Sensitive: ${caseSensitive}`);
+        console.log(`Require Brackets: ${requireBrackets}`);
+        const regex = buildRegexPattern(shipKeyword || strategy_1.Strategy.Ship, showKeyword || strategy_1.Strategy.Show, askKeyword || strategy_1.Strategy.Ask, requireBrackets, caseSensitive);
         try {
             const { owner, repo } = context.repo;
             core.info(`Fetching pull request information`);
@@ -29253,8 +29255,11 @@ function validate(_a) {
                 repo,
                 pull_number: prNumber,
             });
-            const title = pr.title.trim();
+            console.log(`Regex: ${regex}`);
+            const title = pr.title.trim().normalize().replace(/"/g, "");
+            console.log(`Actual PR Title Before Match: "${title}"`);
             const match = title.match(regex);
+            console.log(`Match Result: ${match}`);
             if (match) {
                 // Extract the keyword from the match
                 // If using the above regex, the keyword will be in one of these groups
@@ -29339,7 +29344,7 @@ function buildRegexPattern(shipKeyword, showKeyword, askKeyword, requireBrackets
     const bracketPattern = requireBrackets
         ? `\\[((${pattern}))\\]|\\(((${pattern}))\\)|\\{((${pattern}))\\}`
         : pattern;
-    return new RegExp(bracketPattern, caseSensitive ? undefined : "i");
+    return new RegExp(bracketPattern, caseSensitive ? "" : "i");
 }
 
 

@@ -13,10 +13,10 @@ export async function run() {
     const shipKeyword = core.getInput("ship-keyword");
     const showKeyword = core.getInput("show-keyword");
     const askKeyword = core.getInput("ask-keyword");
-    const caseSensitive = Boolean(core.getInput("case-sensitive"));
-    const addLabel = Boolean(core.getInput("add-label"));
-    const requireBrackets = Boolean(core.getInput("require-brackets"));
-    const fallbackToAsk = Boolean(core.getInput("fallback-to-ask"));
+    const caseSensitive = core.getInput("case-sensitive") === "true";
+    const addLabel = core.getInput("add-label") === "true";
+    const requireBrackets = core.getInput("require-brackets") === "true";
+    const fallbackToAsk = core.getInput("fallback-to-ask") === "true";
     const strategy = await validate({
       token,
       context: github.context,
@@ -24,10 +24,10 @@ export async function run() {
       shipKeyword: shipKeyword || undefined,
       showKeyword: showKeyword || undefined,
       askKeyword: askKeyword || undefined,
-      caseSensitive: caseSensitive || undefined,
-      addLabel: addLabel || undefined,
-      requireBrackets: requireBrackets || undefined,
-      fallbackToAsk: fallbackToAsk || undefined,
+      caseSensitive: caseSensitive,
+      addLabel: addLabel,
+      requireBrackets: requireBrackets,
+      fallbackToAsk: fallbackToAsk,
     });
     if (strategy !== Strategy.Ship && strategy !== Strategy.Show) {
       return console.log(

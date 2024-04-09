@@ -48,12 +48,14 @@ export async function validate({
   let strategy: Strategy | undefined = undefined;
   fallbackToAsk = fallbackToAsk !== undefined ? fallbackToAsk : false;
   const client = github.getOctokit(token, octokitOpts);
+  console.log(`Case Sensitive: ${caseSensitive}`);
+  console.log(`Require Brackets: ${requireBrackets}`);
   const regex = buildRegexPattern(
     shipKeyword || Strategy.Ship,
     showKeyword || Strategy.Show,
     askKeyword || Strategy.Ask,
-    requireBrackets !== undefined ? requireBrackets : true,
-    caseSensitive !== undefined ? caseSensitive : false,
+    requireBrackets,
+    caseSensitive,
   );
 
   try {
@@ -65,8 +67,11 @@ export async function validate({
       pull_number: prNumber,
     });
 
-    const title = pr.title.trim();
+    console.log(`Regex: ${regex}`);
+    const title = pr.title.trim().normalize().replace(/"/g, "");
+    console.log(`Actual PR Title Before Match: "${title}"`);
     const match = title.match(regex);
+    console.log(`Match Result: ${match}`);
 
     if (match) {
       // Extract the keyword from the match
@@ -166,5 +171,5 @@ function buildRegexPattern(
   const bracketPattern = requireBrackets
     ? `\\[((${pattern}))\\]|\\(((${pattern}))\\)|\\{((${pattern}))\\}`
     : pattern;
-  return new RegExp(bracketPattern, caseSensitive ? undefined : "i");
+  return new RegExp(bracketPattern, caseSensitive ? "" : "i");
 }

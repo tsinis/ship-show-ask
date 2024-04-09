@@ -16,7 +16,7 @@ jobs:
         uses: ./
         with:
           add-label: true
-          case-sensitive: true
+          case-sensitive: false
           fallback-to-ask: true
           require-brackets: true
           review-message: "Auto approved Ship or Ask PRs (from Dependabot/Author)"
