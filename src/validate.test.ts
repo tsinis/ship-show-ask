@@ -889,7 +889,7 @@ test("title contains 'ask it' with requireBrackets: true and fallbackToAsk: true
   ).toBe(Strategy.Ask);
 });
 
-function ghContext(title = "[ship] it!"): Context {
+function ghContext(): Context {
   const ctx = new Context();
   ctx.payload = {
     pull_request: {

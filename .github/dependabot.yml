@@ -11,8 +11,8 @@ updates:
       dev-dependencies:
         dependency-type: "development"
     ignore:
-      # ts-jest@29.4.1+ introduces handlebars dependency with unpatched CVE (GHSA-2qvq-rjwj-gvw9).
-      # Unignore once handlebars@>=4.7.9 is released.
+      # ts-jest@29.4.1+ introduces handlebars dependency with CVE GHSA-2qvq-rjwj-gvw9.
+      # Keep this ignore until an upstream patched handlebars release is published and adopted by ts-jest.
       - dependency-name: "ts-jest"
         versions: [">=29.4.1"]
       # @actions/core@3+ and @actions/github@9+ are pure ESM, incompatible with Jest CJS mode.

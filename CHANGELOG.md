@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 3× `@octokit/*` ReDoS vulnerabilities — resolved by updated `@octokit` chain
   - `minimatch` ReDoS — resolved via `overrides: >=10.2.4`; Jest coverage switched to V8 provider to avoid legacy Istanbul minimatch incompatibility during test instrumentation
   - `cookie` invalid character injection — resolved by `msw@2.12.14` already pulling `cookie@1.1.1`
-  - `js-yaml` prototype pollution — resolved by `ts-jest@29.4.0` already pulling `js-yaml@4.1.1`
+  - `js-yaml` prototype pollution — resolved by transitive `js-yaml@3.14.2` via `@istanbuljs/load-nyc-config` (patched range)
 
 ## [0.1.3] - 2024-01-01
 
