@@ -1,6 +1,10 @@
 module.exports = {
-  preset: 'ts-jest',
+  testEnvironment: 'node',
   transform: {
-    '^.+\\.(ts|tsx)?$': 'ts-jest'
-  }
+    '^.+\\.tsx?$': ['ts-jest', { tsconfig: { target: 'es2024' } }],
+    '^.+\\.js$': ['ts-jest', { tsconfig: { target: 'es2024', allowJs: true }, diagnostics: false }]
+  },
+  transformIgnorePatterns: [
+    '/node_modules/(?!(@octokit|universal-user-agent|before-after-hook|until-async)/)'
+  ]
 }

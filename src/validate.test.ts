@@ -5,6 +5,11 @@ import { HttpResponse, http } from "msw";
 import { setupServer } from "msw/node";
 import { Strategy } from "./types/strategy";
 
+// --- TDD: guard exports shape ---
+test("validate is exported as a function", () => {
+  expect(typeof validate).toBe("function");
+});
+
 const originalEnv = process.env;
 
 beforeEach(() => {
@@ -884,7 +889,7 @@ test("title contains 'ask it' with requireBrackets: true and fallbackToAsk: true
   ).toBe(Strategy.Ask);
 });
 
-function ghContext(): Context {
+function ghContext(title = "[ship] it!"): Context {
   const ctx = new Context();
   ctx.payload = {
     pull_request: {
@@ -893,3 +898,182 @@ function ghContext(): Context {
   };
   return ctx;
 }
+
+// --- TDD: strategy detection tests ---
+
+test("detects Strategy.Ship from title", async () => {
+  apiMocks.getUser();
+  mockOctokit("get", "/repos/tsinis/test/pulls/101", 200, {
+    title: "[ship] my feature",
+    head: { sha: "24c5451bbf1fb09caa3ac8024df4788aff4d4974" },
+  });
+  apiMocks.getReviews();
+  apiMocks.addLabels();
+
+  const result = await validate({
+    token: "gh-tok",
+    context: ghContext(),
+    octokitOpts: { request: fetch },
+  });
+  expect(result).toBe(Strategy.Ship);
+});
+
+test("detects Strategy.Show from title", async () => {
+  apiMocks.getUser();
+  mockOctokit("get", "/repos/tsinis/test/pulls/101", 200, {
+    title: "[show] my feature",
+    head: { sha: "24c5451bbf1fb09caa3ac8024df4788aff4d4974" },
+  });
+  apiMocks.getReviews();
+  apiMocks.addLabels();
+
+  const result = await validate({
+    token: "gh-tok",
+    context: ghContext(),
+    octokitOpts: { request: fetch },
+  });
+  expect(result).toBe(Strategy.Show);
+});
+
+test("detects Strategy.Ask from title", async () => {
+  apiMocks.getUser();
+  mockOctokit("get", "/repos/tsinis/test/pulls/101", 200, {
+    title: "[ask] my feature",
+    head: { sha: "24c5451bbf1fb09caa3ac8024df4788aff4d4974" },
+  });
+  apiMocks.getReviews();
+  apiMocks.addLabels();
+
+  const result = await validate({
+    token: "gh-tok",
+    context: ghContext(),
+    octokitOpts: { request: fetch },
+  });
+  expect(result).toBe(Strategy.Ask);
+});
+
+test("case-insensitive match when caseSensitive is false", async () => {
+  apiMocks.getUser();
+  mockOctokit("get", "/repos/tsinis/test/pulls/101", 200, {
+    title: "[SHIP] uppercase keyword",
+    head: { sha: "24c5451bbf1fb09caa3ac8024df4788aff4d4974" },
+  });
+  apiMocks.getReviews();
+  apiMocks.addLabels();
+
+  const result = await validate({
+    token: "gh-tok",
+    context: ghContext(),
+    caseSensitive: false,
+    octokitOpts: { request: fetch },
+  });
+  expect(result).toBe(Strategy.Ship);
+});
+
+test("case-sensitive misses uppercase when caseSensitive is true", async () => {
+  apiMocks.getUser();
+  mockOctokit("get", "/repos/tsinis/test/pulls/101", 200, {
+    title: "[SHIP] uppercase keyword",
+    head: { sha: "24c5451bbf1fb09caa3ac8024df4788aff4d4974" },
+  });
+  apiMocks.getReviews();
+
+  const result = await validate({
+    token: "gh-tok",
+    context: ghContext(),
+    caseSensitive: true,
+    addLabel: false,
+    octokitOpts: { request: fetch },
+  });
+  expect(result).toBeUndefined();
+});
+
+test("require-brackets false: detects keyword without brackets", async () => {
+  apiMocks.getUser();
+  mockOctokit("get", "/repos/tsinis/test/pulls/101", 200, {
+    title: "ship my feature",
+    head: { sha: "24c5451bbf1fb09caa3ac8024df4788aff4d4974" },
+  });
+  apiMocks.getReviews();
+  apiMocks.addLabels();
+
+  const result = await validate({
+    token: "gh-tok",
+    context: ghContext(),
+    requireBrackets: false,
+    octokitOpts: { request: fetch },
+  });
+  expect(result).toBe(Strategy.Ship);
+});
+
+test("require-brackets true: does not match keyword without brackets", async () => {
+  apiMocks.getUser();
+  mockOctokit("get", "/repos/tsinis/test/pulls/101", 200, {
+    title: "ship my feature",
+    head: { sha: "24c5451bbf1fb09caa3ac8024df4788aff4d4974" },
+  });
+  apiMocks.getReviews();
+
+  const result = await validate({
+    token: "gh-tok",
+    context: ghContext(),
+    requireBrackets: true,
+    addLabel: false,
+    octokitOpts: { request: fetch },
+  });
+  expect(result).toBeUndefined();
+});
+
+test("fallback-to-ask returns Ask when no keyword found", async () => {
+  apiMocks.getUser();
+  mockOctokit("get", "/repos/tsinis/test/pulls/101", 200, {
+    title: "no keyword here",
+    head: { sha: "24c5451bbf1fb09caa3ac8024df4788aff4d4974" },
+  });
+  apiMocks.getReviews();
+  apiMocks.addLabels();
+
+  const result = await validate({
+    token: "gh-tok",
+    context: ghContext(),
+    fallbackToAsk: true,
+    octokitOpts: { request: fetch },
+  });
+  expect(result).toBe(Strategy.Ask);
+});
+
+test("no fallback: returns undefined when no keyword found", async () => {
+  apiMocks.getUser();
+  mockOctokit("get", "/repos/tsinis/test/pulls/101", 200, {
+    title: "no keyword here",
+    head: { sha: "24c5451bbf1fb09caa3ac8024df4788aff4d4974" },
+  });
+  apiMocks.getReviews();
+
+  const result = await validate({
+    token: "gh-tok",
+    context: ghContext(),
+    fallbackToAsk: false,
+    addLabel: false,
+    octokitOpts: { request: fetch },
+  });
+  expect(result).toBeUndefined();
+});
+
+test("custom keywords are matched", async () => {
+  apiMocks.getUser();
+  mockOctokit("get", "/repos/tsinis/test/pulls/101", 200, {
+    title: "[deploy] my feature",
+    head: { sha: "24c5451bbf1fb09caa3ac8024df4788aff4d4974" },
+  });
+  apiMocks.getReviews();
+  mockOctokit("post", "/repos/tsinis/test/issues/101/labels", 200, {});
+
+  const result = await validate({
+    token: "gh-tok",
+    context: ghContext(),
+    shipKeyword: "deploy",
+    octokitOpts: { request: fetch },
+  });
+  expect(result).toBe(Strategy.Ship);
+});
