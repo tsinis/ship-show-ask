@@ -1,0 +1,35 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "09:00"
+      timezone: "Europe/Vienna"
+    groups:
+      dev-dependencies:
+        dependency-type: "development"
+    ignore:
+      # ts-jest@29.4.1+ introduces handlebars dependency with unpatched CVE (GHSA-2qvq-rjwj-gvw9).
+      # Unignore once handlebars@>=4.7.9 is released.
+      - dependency-name: "ts-jest"
+        versions: [">=29.4.1"]
+      # @actions/core@3+ and @actions/github@9+ are pure ESM, incompatible with Jest CJS mode.
+      # Unignore when migrating to ESM test infrastructure.
+      - dependency-name: "@actions/core"
+        versions: [">=3.0.0"]
+      - dependency-name: "@actions/github"
+        versions: [">=9.0.0"]
+      # @types/node@25+ requires undici-types@~7 but @actions/github@8 ships undici@6.
+      # Unignore together with @actions/github above.
+      - dependency-name: "@types/node"
+        versions: [">=25.0.0"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "sunday"
+      time: "09:00"
+      timezone: "Europe/Vienna"
