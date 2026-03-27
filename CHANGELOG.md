@@ -29,7 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed 15 Dependabot alerts:
   - 9× `undici` CVEs — resolved by `@actions/github@8` shipping `undici@^6.23.0`
   - 3× `@octokit/*` ReDoS vulnerabilities — resolved by updated `@octokit` chain
-  - `minimatch` ReDoS — resolved via `overrides: >=10.2.3` (forced due to `ts-jest@29.4.0` pulling `minimatch@3.x` through `ejs → jake → filelist` and `test-exclude → glob@7` chains)
+  - `minimatch` ReDoS — resolved via `overrides: >=10.2.4`; Jest coverage switched to V8 provider to avoid legacy Istanbul minimatch incompatibility during test instrumentation
   - `cookie` invalid character injection — resolved by `msw@2.12.14` already pulling `cookie@1.1.1`
   - `js-yaml` prototype pollution — resolved by `ts-jest@29.4.0` already pulling `js-yaml@4.1.1`
 
