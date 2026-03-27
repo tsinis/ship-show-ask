@@ -43,6 +43,11 @@ You can customize these options by changing the values in the `with` block.
 > [!TIP]
 > All of these inputs are optional, and if not provided, the action will use the default values.
 
+> [!IMPORTANT]
+> Since `v0.2.0`, this action uses `runs.using: node24`.
+> Your environment must use a GitHub-hosted runner (or a self-hosted runner / GHES version) that supports Node 24 actions runtime.
+> If you run on older self-hosted runners or older GHES, pin to `v0.1.3` until your runner stack is upgraded.
+
 ### Inputs
 
 - `ship-keyword`: The keyword for the Ship strategy. Default is 'ship'.

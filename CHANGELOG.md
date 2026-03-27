@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Updated GitHub Actions runner from `node20` to `node24`
+- Documented Node 24 runtime compatibility requirement for older self-hosted runners / GHES users (recommend pinning to `v0.1.3` until runner upgrade)
 - Updated `@actions/core` from `1.10.1` to `2.0.3`
 - Updated `@actions/github` from `6.0.0` to `8.0.1`
 - Updated `typescript` from `5.4.3` to `5.9.3` (ES2024 target)
