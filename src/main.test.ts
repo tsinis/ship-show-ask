@@ -4,6 +4,12 @@ import { Context } from "@actions/github/lib/context";
 import { setupServer } from "msw/node";
 import { approve } from "./approve";
 import { run } from "./main";
+import * as mainModule from "./main";
+
+// --- TDD: guard exports shape ---
+test("run is exported as a function", () => {
+  expect(typeof mainModule.run).toBe("function");
+});
 
 jest.mock("./validate", () => {
   const { Strategy } = require("./types/strategy");

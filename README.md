@@ -8,7 +8,7 @@ This action will get information about the preferred ship/show/ask strategy of t
 
 ## Usage instructions
 
-Create a workflow file (e.g. `.github/workflows/ship-show-ask.yml`) that contains a step that `uses: tsinis/ship-show-ask@v0.1.3`. Here's an example workflow file:
+Create a workflow file (e.g. `.github/workflows/ship-show-ask.yml`) that contains a step that `uses: tsinis/ship-show-ask@v0.2.0`. Here's an example workflow file:
 
 ```yaml
 name: Auto approve Ship/Show PRs
@@ -22,7 +22,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: tsinis/ship-show-ask@v0.1.3
+      - uses: tsinis/ship-show-ask@v0.2.0
         with:
           ship-keyword: 'lgtm' # optional, default to 'ship'
           show-keyword: 'lgty' # optional, default to 'show'
@@ -42,6 +42,11 @@ You can customize these options by changing the values in the `with` block.
 
 > [!TIP]
 > All of these inputs are optional, and if not provided, the action will use the default values.
+
+> [!IMPORTANT]
+> Since `v0.2.0`, this action uses `runs.using: node24`.
+> Your environment must use a GitHub-hosted runner (or a self-hosted runner / GHES version) that supports Node 24 actions runtime.
+> If you run on older self-hosted runners or older GHES, pin to `v0.1.3` until your runner stack is upgraded.
 
 ### Inputs
 
@@ -71,7 +76,7 @@ jobs:
       pull-requests: write
     if: github.actor == 'dependabot[bot]'
     steps:
-      - uses: tsinis/ship-show-ask@v0.1.3
+      - uses: tsinis/ship-show-ask@v0.2.0
 ```
 
 If you want to use this action from a workflow file that doesn't run on the `pull_request` or `pull_request_target` events, use the `pull-request-number` input:
@@ -92,7 +97,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-    - uses: tsinis/ship-show-ask@v0.1.3
+    - uses: tsinis/ship-show-ask@v0.2.0
       with:
         pull-request-number: ${{ github.event.inputs.pullRequestNumber }}
 ```
@@ -112,7 +117,7 @@ jobs:
       pull-requests: write
     if: github.actor == 'dependabot[bot]'
     steps:
-      - uses: tsinis/ship-show-ask@v0.1.3
+      - uses: tsinis/ship-show-ask@v0.2.0
         with:
           review-message: "Auto approved automated PR (from Dependabot)"
 ```
@@ -133,7 +138,7 @@ jobs:
   ship-show-ask:
     runs-on: ubuntu-latest
     steps:
-      - uses: tsinis/ship-show-ask@v0.1.3
+      - uses: tsinis/ship-show-ask@v0.2.0
         with:
           github-token: ${{ secrets.SOME_USERS_PAT }}
 ```
@@ -156,4 +161,4 @@ If you're using a [CODEOWNERS file](https://docs.github.com/en/github/creating-c
 
 ## Development and release process
 
-Each major version corresponds to a branch (e.g. `v0.1`, `v1.0`). Releases are tagged with semver-style version numbers (e.g. `v0.1.3`).
+Each major version corresponds to a branch (e.g. `v0.1`, `v1.0`). Releases are tagged with semver-style version numbers (e.g. `v0.2.0`).
