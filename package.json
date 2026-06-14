@@ -30,13 +30,13 @@
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
-    "@types/node": "^24.12.0",
-    "@vercel/ncc": "^0.38.4",
-    "jest": "^30.3.0",
-    "msw": "^2.12.14",
-    "prettier": "^3.8.1",
+    "@types/node": "^24.13.2",
+    "@vercel/ncc": "^0.44.0",
+    "jest": "^30.4.2",
+    "msw": "^2.14.6",
+    "prettier": "^3.8.4",
     "ts-jest": "29.4.0",
-    "typescript": "~5.9.3"
+    "typescript": "~6.0.3"
   },
   "overrides": {
     "minimatch": "10.2.4"
